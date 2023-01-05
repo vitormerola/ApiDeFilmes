@@ -8,6 +8,8 @@ namespace FilmesAPI.Models;
 // Para sermos mais expressivos com quem for consumir a API, podemos deixar mensagens mais claras de erro através do parâmetro ErrorMessage.
 public class Filme
 {
+    [Key]
+    [Required]
     public int Id { get; set; }
 
     [Required(ErrorMessage = "O título do filme é obrigatório")]

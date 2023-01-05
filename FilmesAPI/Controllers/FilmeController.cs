@@ -1,4 +1,7 @@
-﻿using FilmesAPI.Models;
+﻿using AutoMapper;
+using FilmesAPI.Data;
+using FilmesAPI.Data.Dtos;
+using FilmesAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FilmesAPI.Controllers;
@@ -10,16 +13,23 @@ namespace FilmesAPI.Controllers;
 // dentro do route, ficando, "por debaixo dos panos", dessa maneira: [Route("[Filme]")].
 public class FilmeController : ControllerBase
 {
-    private static List<Filme> filmes = new List<Filme>();
-    private static int id = 0;
-    
+    private FilmeContext _context;
+    private IMapper _mapper;
+
+    public FilmeController(FilmeContext context, IMapper mapper)
+    {
+        _context = context;
+        _mapper = mapper;
+    }
+
     [HttpPost]
     // O FromBody quer dizer que a informação vem através do corpo da requisição.
     // Estudar mais sobre CreatedAtAction - https://www.macoratti.net/19/06/aspnc_3dwebapi1.htm
-    public IActionResult AdicionaFilme([FromBody] Filme filme)
-    {
-        filme.Id = id++;
-        filmes.Add(filme);
+    public IActionResult AdicionaFilme([FromBody] CreateFilmeDto filmeDto)
+    { 
+        Filme filme = _mapper.Map<Filme>(filmeDto);
+        _context.Filmes.Add(filme);
+        _context.SaveChanges();
         return CreatedAtAction(nameof(RecuperaFilmePorId), new {id = filme.Id}, filme);
 
     }
@@ -31,13 +41,13 @@ public class FilmeController : ControllerBase
     // O take está =50, pois foi um valor que julguei que não seria muito exagerado e para não sobrecarregar a memória sistema de filmes
     public IEnumerable<Filme> RecuperaFilmes([FromQuery]int skip = 0, [FromQuery] int take = 50)
     {
-        return filmes.Skip(skip).Take(take);
+        return _context.Filmes.Skip(skip).Take(take);
     }
 
     [HttpGet("{id}")]
     public IActionResult RecuperaFilmePorId (int id)
     {
-      var filme = filmes.FirstOrDefault(filme => filme.Id == id);
+      var filme = _context.Filmes.FirstOrDefault(filme => filme.Id == id);
         if (filme == null) return NotFound();
         return Ok(filme);
     }
